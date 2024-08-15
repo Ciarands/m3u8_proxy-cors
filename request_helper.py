@@ -14,6 +14,7 @@ class Requester:
         self.path = parsed_url.path
         params = self.query_params.copy()
         params.pop("url", None)
+        referer = params.pop("referer", None)
         params.pop("type", None)
         params.pop("headers", None)
         params.pop("method", None)
@@ -27,7 +28,7 @@ class Requester:
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,'
                       'image/webp,image/apng,*/*;q=0.8',
             'connection': 'keep-alive',
-            'referer': None,
+            'referer': referer,
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": "Linux",
         }
@@ -37,6 +38,7 @@ class Requester:
 
     def get(self, data=None, headers=None, method='get', json_data=None, additional_params=None, cookies=None):
         headers = self.headers(headers)
+        method = method.lower()
         try:
             additional_params = json.loads(additional_params)
         except (json.JSONDecodeError, TypeError):
@@ -54,7 +56,7 @@ class Requester:
                                  json=json_data, allow_redirects=False, cookies=cookies)
         else:
             data = requests.get(self.req_url, headers=headers, data=data, timeout=35,
-                                json=json_data, allow_redirects=False, cookies=cookies)
+                                verify=False, json=json_data, allow_redirects=False, cookies=cookies)
         return [data.content, data.headers, data.status_code, data.cookies]
 
     def headers(self, headers):

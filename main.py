@@ -2,7 +2,7 @@ import os
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
-from cors import add_cors
+from cors import add_cors, add_keys
 
 try:
     enable_docs = bool(os.getenv("documentation", False))
@@ -39,6 +39,7 @@ except TypeError:
 # to run on a different port you can set the port env variable
 
 add_cors(app, allowed_origins, allow_no_url_param_also)
+add_keys(app, allowed_origins, allow_no_url_param_also)
 
 if __name__ == '__main__':
     uvicorn.run(app, host="0.0.0.0", port=port)
