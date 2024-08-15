@@ -16,16 +16,16 @@ async def cors(request: Request, origins, method="GET") -> Response:
     if current_domain is None:
         current_domain = origins
     if current_domain not in origins.replace(", ", ",").split(",") and origins != "*":
-        return Response()
+        return Response("Bad domain!", status_code=404)
     if not request.query_params.get('url'):
-        return Response()
+        return Response("No url passed!", status_code=404)
     file_type = request.query_params.get('type')
     requested = Requester(str(request.url))
     main_url = requested.host + requested.path + "?url="
     key_url = main_url.replace("/cors", "/key")
     referer = requested.base_headers.get("referer")
     if not referer:
-        return Response()
+        return Response("No referrer passed!", status_code=404)
     url = requested.query_params.get("url")
     url += "?" + requested.query_string(requested.remaining_params)
     requested = Requester(url)
@@ -73,7 +73,7 @@ async def cors(request: Request, origins, method="GET") -> Response:
             elif line.startswith('http'):
                 new_content += main_url + requested.safe_sub(line)
             elif line.strip(' '):
-                if '.ts' in line:
+                if '.ts' in line and not os.getenv('proxy_ts', False):
                     new_content += requested.host \
                     + '/'.join(str(requested.path).split('?')[0].split('/')[:-1]) \
                     + '/' + line
@@ -89,7 +89,7 @@ async def cors(request: Request, origins, method="GET") -> Response:
     if "location" in headers:
         if headers["location"].startswith("/"):
             headers["location"] = requested.host + headers["location"]
-        headers["location"] = main_url + headers["location"]
+        headers["location"] = main_url + headers["location"] + f"&referer={referer}"
     resp = Response(content, code, headers=headers)
     resp.set_cookie("_last_requested", requested.host, max_age=3600, httponly=True)
     return resp
